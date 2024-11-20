@@ -1,7 +1,7 @@
+from functools import cache
 from typing import Any, Type, TypeVar
 
 from pydantic import TypeAdapter
-from functools import cache
 
 T = TypeVar("T")
 
