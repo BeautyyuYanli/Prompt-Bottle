@@ -4,15 +4,15 @@
 
 # Prompt Bottle
 
-LLM-targeted template engine, built upon Jinja.
+An LLM-targeted template engine, built upon Jinja.
 
 </div>
 
 ## Features
 
-- Use Jinja syntax to build template for OpenAI chat completion API.
-- Multimodal support for input - without pain.
-- Simple and easy to use.
+- Use Jinja syntax to build template for LLM inputs list
+- Painless multimodal support for LLM inputs
+- Use OpenAI chat completion API
 
 ## Quick Start
 
