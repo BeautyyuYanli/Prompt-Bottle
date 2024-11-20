@@ -1,0 +1,57 @@
+[project]
+name = "prompt_bottle"
+version = "0.1.0"
+description = "LLM-targeted template engine, built upon Jinja"
+authors = [
+    {name = "Yanli",email = "mail@yanli.one"},
+]
+dependencies = [
+    "openai>=1.51.2",
+    "jinja2>=3.1.4",
+    "PyYAML>=6.0.2",
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+[tool.pdm.dev-dependencies]
+dev = [
+    "rich>=13.9.4",
+]
+
+
+[tool.pyright]
+venvPath = ".venv"
+
+[tool.ruff]
+target-version = "py39"
+exclude = [".venv"]
+[tool.ruff.lint]
+select = ["E", "F", "G", "B", "I", "SIM", "TID", "PL", "RUF"]
+ignore = [
+    "RUF001",  # '，' vs. ','
+    "RUF003",  # Ambiguous unicode character comment
+    "E501",    # Line too long
+    "E402",    # Module level import not at top of file
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "SIM105",  # Use `contextlib.suppress(Exception)` instead of `try`-`except`-`pass`
+    "SIM102",  # Use a single `if` statement instead of nested `if` statements
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["prompt_bottle"]
+
+
+[tool.pdm.scripts]
+fix = { shell = "ruff check --fix && ruff format" }
+check = { shell = 'ruff check && ruff format --check' }
