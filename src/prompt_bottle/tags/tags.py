@@ -2,6 +2,7 @@ import json
 from enum import Enum
 from typing import Any, Dict, Union, cast
 
+import yaml
 from openai.types.chat.chat_completion_content_part_input_audio_param import InputAudio
 
 
@@ -21,7 +22,15 @@ def pb_tag(tag: PBTag, content: Union[str, Dict[str, Any]]):
     if isinstance(content, str):
         return f"<{tag.value}>{content}</{tag.value}>"
     else:
-        return f"<{tag.value}>{json.dumps(content)}</{tag.value}>"
+        return (
+            f"<{tag.value}>"
+            + json.dumps(
+                yaml.safe_dump(
+                    content, default_flow_style=True, width=float("inf")
+                ).strip()
+            )[1:-1]
+            + f"</{tag.value}>"
+        )
 
 
 def pb_img_url(url: str):

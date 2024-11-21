@@ -1,6 +1,5 @@
 import json
 import re
-from copy import deepcopy
 from typing import (
     Iterable,
     List,
@@ -61,24 +60,36 @@ def render_text(
         text = Template(text).render(**kwargs)
     parts: List[ChatCompletionContentPartParam] = []
     last_end = 0
-    # Process all PBTags in the text
-    for tag in PBTag:
-        pattern = pb_tag_regex(tag)
-        for match in re.finditer(pattern, text):
-            if match.start() > last_end:
-                # Add normal text before the match
-                normal_text = text[last_end : match.start()]
-                if normal_text:  # Only add if there's actual text
-                    parts.append(to_text_part(normal_text))
-            # Convert the tag to corresponding OpenAI type using the mapping
+
+    # Combine all tag patterns into one regex
+    combined_pattern = "|".join(f"({pb_tag_regex(tag)})" for tag in PBTag)
+
+    # Process all matches in a single pass
+    for match in re.finditer(combined_pattern, text):
+        if match.start() > last_end:
+            # Add normal text before the match
+            normal_text = text[last_end : match.start()]
+            if normal_text:
+                parts.append(to_text_part(normal_text))
+
+        # Find which group matched (which tag)
+        matched_groups = [
+            (i, g) for i, g in enumerate(match.groups()[1::2]) if g is not None
+        ]
+        if matched_groups:
+            group_index, matched_text = matched_groups[0]
+            tag = list(PBTag)[group_index]
             converter = PB_TAG_TO_OPENAI[tag]
-            parts.append(converter(match.group(1)))
-            last_end = match.end()
+            parts.append(converter(matched_text))
+
+        last_end = match.end()
+
     # Add any remaining normal text
     if last_end < len(text):
         normal_text = text[last_end:]
-        if normal_text:  # Only add if there's actual text
+        if normal_text:
             parts.append(to_text_part(normal_text))
+
     return parts
 
 
@@ -106,7 +117,7 @@ def render_string(template: str, **kwargs) -> List[ChatCompletionMessageParam]:
     json_expanded = check_type(
         yaml.safe_load(expanded), List[ChatCompletionMessageParam]
     )
-    return render_struct(json_expanded, jinja_render=False, **kwargs)
+    return render_struct(json_expanded, **kwargs)
 
 
 def render_struct(
@@ -145,7 +156,7 @@ def render_struct(
         message["content"] = check_type(rendered, List[ContentArrayOfContentPart])
         return message
 
-    answer = list(deepcopy(template))
+    answer = list(template)
     for message in answer:
         if message["role"] == "system":
             render_system_message(message)

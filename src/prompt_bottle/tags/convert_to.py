@@ -1,6 +1,6 @@
-import json
 from typing import Callable, Dict
 
+import yaml
 from openai.types.chat import (
     ChatCompletionContentPartImageParam,
     ChatCompletionContentPartInputAudioParam,
@@ -29,7 +29,7 @@ def to_text_part(content: str) -> ChatCompletionContentPartTextParam:
 
 def to_audio_part(content: str) -> ChatCompletionContentPartInputAudioParam:
     return {
-        "input_audio": check_type(json.loads(content), type=InputAudio),
+        "input_audio": check_type(yaml.safe_load(content), type=InputAudio),
         "type": "input_audio",
     }
 
