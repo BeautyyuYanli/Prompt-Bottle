@@ -1,6 +1,6 @@
 [project]
 name = "prompt_bottle"
-version = "0.1.0"
+version = "0.1.1"
 description = "LLM-targeted template engine, built upon Jinja"
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
