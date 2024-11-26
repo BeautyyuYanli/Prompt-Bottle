@@ -1,6 +1,6 @@
 [project]
 name = "prompt_bottle"
-version = "0.1.1"
+version = "0.1.2"
 description = "LLM-targeted template engine, built upon Jinja"
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
@@ -17,6 +17,11 @@ license = {text = "MIT"}
 [project.urls]
 Repository = "https://github.com/BeautyyuYanli/Prompt-Bottle"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3",
+    "rich>=13.9.4"
+]
 
 
 [build-system]
@@ -25,12 +30,6 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
-[tool.pdm.dev-dependencies]
-dev = [
-    "rich>=13.9.4",
-    "pytest>=8.3.3",
-]
-
 
 [tool.pyright]
 venvPath = ".venv"
