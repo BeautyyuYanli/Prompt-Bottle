@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import yaml
+
 from prompt_bottle import (
     PromptBottle,
     pb_audio,
@@ -79,9 +81,19 @@ class TestBottle(TestCase):
         ]
         return rendered
 
+    def test_complicated_template_arg(self):
+        bottle = PromptBottle([{"role": "user", "content": "{{arg0}}"}])
+        arg0 = {
+            "hello": [1, 2, 3],
+            "world": ["'", '"'],
+        }
+        rendered = bottle.render(arg0=arg0)
+        assert yaml.safe_load(rendered[0]["content"][0]["text"]) == arg0  # type: ignore
+
 
 if __name__ == "__main__":
     from rich import print
 
     # print(TestBottle().test_text_tag_render())
-    print(TestBottle().test_audio_by_raw_string())
+    # print(TestBottle().test_audio_by_raw_string())
+    print(TestBottle().test_complicated_template_arg())

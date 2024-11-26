@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:99c05ef6e0f5f7ad960bd223a7de84ae760c560484e6adb385ee82d9f37a5a3e"
+content_hash = "sha256:89cb254865b22a5059a1789324495bb38ae50c1fa3bf6d96f79ba2f8b0267a42"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -337,13 +337,12 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.54.5"
+version = "1.55.1"
 requires_python = ">=3.8"
 summary = "The official Python library for the openai API"
 groups = ["default"]
 dependencies = [
     "anyio<5,>=3.5.0",
-    "cached-property; python_version < \"3.8\"",
     "distro<2,>=1.7.0",
     "httpx<1,>=0.23.0",
     "jiter<1,>=0.4.0",
@@ -353,8 +352,8 @@ dependencies = [
     "typing-extensions<5,>=4.11",
 ]
 files = [
-    {file = "openai-1.54.5-py3-none-any.whl", hash = "sha256:f55a4450f38501814b53e76311ed7845a6f7f35bab46d0fb2a3728035d7a72d8"},
-    {file = "openai-1.54.5.tar.gz", hash = "sha256:2aab4f9755a3e1e04d8a45ac1f4ce7b6948bab76646020c6386256d7e5cbb7e0"},
+    {file = "openai-1.55.1-py3-none-any.whl", hash = "sha256:d10d96a4f9dc5f05d38dea389119ec8dcd24bc9698293c8357253c601b4a77a5"},
+    {file = "openai-1.55.1.tar.gz", hash = "sha256:471324321e7739214f16a544e801947a046d3c5d516fae8719a317234e4968d3"},
 ]
 
 [[package]]
@@ -595,6 +594,17 @@ groups = ["default"]
 files = [
     {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
     {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
+]
+
+[[package]]
+name = "stone-brick-toolkit"
+version = "0.3.0"
+requires_python = ">=3.9"
+summary = "Stone Brick is a toolkit providing some commonly used utilities."
+groups = ["default"]
+files = [
+    {file = "stone_brick_toolkit-0.3.0-py3-none-any.whl", hash = "sha256:bbd92c0ff670e01a34e8e576b9bf32fdc308812ffe137a75d3a6baa616041dbd"},
+    {file = "stone_brick_toolkit-0.3.0.tar.gz", hash = "sha256:5946ca043fd9d2d0c08ec8aeeee9e1f0d7ccb2ad63c5c95187b758bfc933f22f"},
 ]
 
 [[package]]

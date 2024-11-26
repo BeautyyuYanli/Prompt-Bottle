@@ -9,6 +9,7 @@ dependencies = [
     "openai>=1.51.2",
     "jinja2>=3.1.4",
     "PyYAML>=6.0.2",
+    "stone-brick-toolkit~=0.3.0"
 ]
 requires-python = ">=3.9"
 readme = "README.md"

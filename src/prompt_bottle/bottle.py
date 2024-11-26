@@ -21,14 +21,68 @@ from openai.types.chat import (
 from openai.types.chat.chat_completion_assistant_message_param import (
     ContentArrayOfContentPart,
 )
+from stone_brick.parser.xml import tags_from_text
 
 from prompt_bottle.tags.convert_to import PB_TAG_TO_OPENAI, to_text_part
-from prompt_bottle.tags.tags import PBTag, pb_tag_regex
+from prompt_bottle.tags.tags import PBTag
 from prompt_bottle.utils import check_type
 
 # from typeguard import check_type
 
 ALL_PART_PARAM = Union[ChatCompletionContentPartParam, ContentArrayOfContentPart]
+
+PLACEHOLDER = "PROMPT_BOTTLE_PLACEHOLDER"
+
+
+def _encapsulate(value):
+    """Surround all {{...}} patterns to be <PLACEHOLDER>{{...}}</PLACEHOLDER>"""
+    if isinstance(value, str):
+        # Find all {{...}} patterns and wrap them with placeholders
+        pattern = r"(\{\{.*?\}\})"
+        value = re.sub(pattern, f"<{PLACEHOLDER}>\\1</{PLACEHOLDER}>", value)
+        return value
+    elif isinstance(value, dict):
+        return {k: _encapsulate(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [_encapsulate(v) for v in value]
+    else:
+        return value
+
+
+def _decapsulate(value: str):
+    """Get all <PLACEHOLDER>any string</PLACEHOLDER> patterns, remove the placeholders,
+    and dump things in it as a json string"""
+    pattern = f"<{PLACEHOLDER}>(.*?)</{PLACEHOLDER}>"
+
+    # Find all matches and replace them with their JSON-decoded content
+    def replace_func(match: re.Match):
+        content = match.group(1)
+        # Encode the content as a JSON string
+        return json.dumps(content, ensure_ascii=False)[1:-1]
+
+    return re.sub(pattern, replace_func, value, flags=re.DOTALL)
+
+
+def _convert_controlled_struct(
+    template: Sequence[Union[ChatCompletionMessageParam, str]],
+) -> str:
+    """Convert the bottle template to a json string, so that it can be rendered by jinja2"""
+    string_list: List[str] = []
+    for message in template:
+        if isinstance(message, str):
+            if re.match(r"^\s*\{\{.*\}\}\s*$", message.strip()):
+                string_list.append(message + ",")
+            elif re.match(r"^\s*\{\%.*\%\}\s*$", message.strip()):
+                string_list.append(message)
+            else:
+                raise ValueError(
+                    f"Unknown template string: {message} \nThe string in list can only be {{{{ var }}}} or {{% expression %}}"
+                )
+        else:
+            string_list.append(
+                json.dumps(_encapsulate(message), ensure_ascii=False) + ","
+            )
+    return "[" + "".join(string_list) + "]"
 
 
 class PromptBottle:
@@ -36,10 +90,7 @@ class PromptBottle:
 
     def __init__(
         self,
-        template: Union[
-            List[Union[ChatCompletionMessageParam, str]],
-            str,
-        ],
+        template: List[Union[ChatCompletionMessageParam, str]],
     ):
         if isinstance(template, str):
             self.template = template
@@ -59,63 +110,22 @@ def render_text(
     if jinja_render:
         text = Template(text).render(**kwargs)
     parts: List[ChatCompletionContentPartParam] = []
-    last_end = 0
 
-    # Combine all tag patterns into one regex
-    combined_pattern = "|".join(f"({pb_tag_regex(tag)})" for tag in PBTag)
-
-    # Process all matches in a single pass
-    for match in re.finditer(combined_pattern, text):
-        if match.start() > last_end:
-            # Add normal text before the match
-            normal_text = text[last_end : match.start()]
-            if normal_text:
-                parts.append(to_text_part(normal_text))
-
-        # Find which group matched (which tag)
-        matched_groups = [
-            (i, g) for i, g in enumerate(match.groups()[1::2]) if g is not None
-        ]
-        if matched_groups:
-            group_index, matched_text = matched_groups[0]
-            tag = list(PBTag)[group_index]
-            converter = PB_TAG_TO_OPENAI[tag]
-            parts.append(converter(matched_text))
-
-        last_end = match.end()
-
-    # Add any remaining normal text
-    if last_end < len(text):
-        normal_text = text[last_end:]
-        if normal_text:
-            parts.append(to_text_part(normal_text))
+    tags = tags_from_text(text, list(PBTag))
+    for tag in tags:
+        if isinstance(tag, tuple):
+            name, content = tag
+            parts.append(PB_TAG_TO_OPENAI[PBTag(name)](content))
+        else:
+            parts.append(to_text_part(tag))
 
     return parts
-
-
-def _convert_controlled_struct(
-    template: Sequence[Union[ChatCompletionMessageParam, str]],
-) -> str:
-    string_list: List[str] = []
-    for message in template:
-        if isinstance(message, str):
-            if re.match(r"^\s*\{\{.*\}\}\s*$", message.strip()):
-                string_list.append(message + ",")
-            elif re.match(r"^\s*\{\%.*\%\}\s*$", message.strip()):
-                string_list.append(message)
-            else:
-                raise ValueError(
-                    f"Unknown template string: {message} \nThe string in list can only be {{{{ var }}}} or {{% expression %}}"
-                )
-        else:
-            string_list.append(json.dumps(message, ensure_ascii=False) + ",")
-    return "[" + "".join(string_list) + "]"
 
 
 def render_string(template: str, **kwargs) -> List[ChatCompletionMessageParam]:
     expanded = Template(template).render(**kwargs)
     json_expanded = check_type(
-        yaml.safe_load(expanded), List[ChatCompletionMessageParam]
+        yaml.safe_load(_decapsulate(expanded)), List[ChatCompletionMessageParam]
     )
     return render_struct(json_expanded, **kwargs)
 
