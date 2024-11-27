@@ -1,4 +1,5 @@
-# pip install rich "stone-brick-toolkit[llm]~=0.4.0"
+# This example is written on dependency version:
+# pip install rich "stone-brick-toolkit[llm]~=0.5.0" "prompt-bottle~=0.1.3"
 from enum import Enum
 from typing import (
     List,

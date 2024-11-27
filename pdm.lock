@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:a8f503642784cfe3a083f48add913193aad9141c623c65655315d0b2d0ccd3f0"
+content_hash = "sha256:1e27341fe30165b1f1b38f1e75caa09978017cbd569e9d476ca932902b4a13de"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -598,13 +598,13 @@ files = [
 
 [[package]]
 name = "stone-brick-toolkit"
-version = "0.3.0"
+version = "0.5.0"
 requires_python = ">=3.9"
 summary = "Stone Brick is a toolkit providing some commonly used utilities."
 groups = ["default"]
 files = [
-    {file = "stone_brick_toolkit-0.3.0-py3-none-any.whl", hash = "sha256:bbd92c0ff670e01a34e8e576b9bf32fdc308812ffe137a75d3a6baa616041dbd"},
-    {file = "stone_brick_toolkit-0.3.0.tar.gz", hash = "sha256:5946ca043fd9d2d0c08ec8aeeee9e1f0d7ccb2ad63c5c95187b758bfc933f22f"},
+    {file = "stone_brick_toolkit-0.5.0-py3-none-any.whl", hash = "sha256:093e512760fde14ade9abdb72b6ed055def15f3804a315d40d62e0d0ce6b2c9d"},
+    {file = "stone_brick_toolkit-0.5.0.tar.gz", hash = "sha256:643803098c93aae468f248242d5304642a0735e07ff4e64e9288ba9667393e28"},
 ]
 
 [[package]]
