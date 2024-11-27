@@ -111,7 +111,7 @@ def render_text(
         text = Template(text).render(**kwargs)
     parts: List[ChatCompletionContentPartParam] = []
 
-    tags = tags_from_text(text, list(PBTag))
+    tags = tags_from_text(text, [tag.value for tag in PBTag])
     for tag in tags:
         if isinstance(tag, tuple):
             name, content = tag

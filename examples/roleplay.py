@@ -190,7 +190,7 @@ async def try_generate(
     )
 
     def validator(text: str):
-        tags = tags_from_text(text, list(LogType))
+        tags = tags_from_text(text, [tag.value for tag in LogType])
         for item in tags:
             if isinstance(item, tuple):
                 return LogType(item[0]), item[1]
