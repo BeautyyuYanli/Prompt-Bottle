@@ -1,10 +1,10 @@
-# pip install rich stone-brick-toolkit[llm]~=0.3.1
+# pip install rich "stone-brick-toolkit[llm]~=0.4.0"
 from enum import Enum
 from typing import (
     List,
 )
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 from pydantic import BaseModel
 from rich import print
 from stone_brick.llm.error import GeneratedNotValid
@@ -171,8 +171,8 @@ examples = [
 ]
 
 
-def try_generate(
-    oai: OpenAI,
+async def try_generate(
+    oai: AsyncOpenAI,
     model: str,
     npc: str,
     player: str,
@@ -195,7 +195,7 @@ def try_generate(
                 return LogType(item[0]), item[1]
         raise GeneratedNotValid()
 
-    parsed = oai_gen_with_retry_then_validate(
+    parsed = await oai_gen_with_retry_then_validate(
         oai_client=oai,
         model=model,
         prompt=prompt,
@@ -205,7 +205,7 @@ def try_generate(
     return parsed
 
 
-def main(oai: OpenAI, model: str):
+async def main(oai: AsyncOpenAI, model: str):
     rounds = []
     while True:
         user_input: str = input("You: ")
@@ -213,7 +213,7 @@ def main(oai: OpenAI, model: str):
             LogEntry(role=PLAYER, type=LogType.PLAYER_ACT, content=user_input)
         )
         while True:
-            log_type, content = try_generate(
+            log_type, content = await try_generate(
                 oai, model, NPC, PLAYER, DESC, examples, rounds
             )
             if log_type == LogType.END_TURN:
@@ -230,5 +230,7 @@ def main(oai: OpenAI, model: str):
 
 
 if __name__ == "__main__":
-    oai = OpenAI()
-    main(oai, "gpt-4o-mini")
+    import asyncio
+
+    oai = AsyncOpenAI()
+    asyncio.run(main(oai, "gpt-4o-mini"))
