@@ -21,7 +21,7 @@ from openai.types.chat import (
 from openai.types.chat.chat_completion_assistant_message_param import (
     ContentArrayOfContentPart,
 )
-from stone_brick.parser.xml import tags_from_text
+from stone_brick.parser.xml import flat_xml_tags_from_text
 
 from prompt_bottle.tags.convert_to import PB_TAG_TO_OPENAI, to_text_part
 from prompt_bottle.tags.tags import PBTag
@@ -111,7 +111,7 @@ def render_text(
         text = Template(text).render(**kwargs)
     parts: List[ChatCompletionContentPartParam] = []
 
-    tags = tags_from_text(text, [tag.value for tag in PBTag])
+    tags = flat_xml_tags_from_text(text, [tag.value for tag in PBTag])
     for tag in tags:
         if isinstance(tag, tuple):
             name, content = tag

@@ -1,6 +1,6 @@
 [project]
 name = "prompt_bottle"
-version = "0.1.4"
+version = "0.1.5"
 description = "LLM-targeted template engine, built upon Jinja"
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
@@ -9,7 +9,7 @@ dependencies = [
     "openai>=1.51.2",
     "jinja2>=3.1.4",
     "PyYAML>=6.0.2",
-    "stone-brick-toolkit~=0.5.0"
+    "stone-brick-toolkit>=0.6.1,<1.0.0"
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -31,6 +31,11 @@ build-backend = "pdm.backend"
 [tool.pdm]
 distribution = true
 
+[tool.pdm.dev-dependencies]
+dev = [
+    "rich>=13.9.4",
+    "ruff>=0.8.1",
+]
 [tool.pyright]
 venvPath = ".venv"
 

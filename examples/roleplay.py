@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from rich import print
 from stone_brick.llm.error import GeneratedNotValid
 from stone_brick.llm.utils import oai_gen_with_retry_then_validate
-from stone_brick.parser.xml import tags_from_text
+from stone_brick.parser import flat_xml_tags_from_text
 
 from prompt_bottle import PromptBottle
 
@@ -190,7 +190,7 @@ async def try_generate(
     )
 
     def validator(text: str):
-        tags = tags_from_text(text, [tag.value for tag in LogType])
+        tags = flat_xml_tags_from_text(text, [tag.value for tag in LogType])
         for item in tags:
             if isinstance(item, tuple):
                 return LogType(item[0]), item[1]

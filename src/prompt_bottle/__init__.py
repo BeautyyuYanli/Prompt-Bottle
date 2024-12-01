@@ -10,12 +10,12 @@ from prompt_bottle.tags.tags import (
 )
 
 __all__ = [
-    "PromptBottle",
-    "simple_bottle",
     "PBTag",
-    "pb_tag",
+    "PromptBottle",
+    "pb_audio",
     "pb_img_url",
     "pb_mp3_audio",
+    "pb_tag",
     "pb_wav_audio",
-    "pb_audio",
+    "simple_bottle",
 ]
