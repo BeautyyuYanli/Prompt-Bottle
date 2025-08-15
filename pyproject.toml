@@ -6,22 +6,14 @@ authors = [
     {name = "Yanli",email = "mail@yanli.one"},
 ]
 dependencies = [
-    "openai>=1.51.2",
-    "jinja2>=3.1.4",
-    "PyYAML>=6.0.2",
-    "stone-brick-toolkit>=0.6.1,<1.0.0"
+    "qwq-tag>=0.1.1",
+    "minijinja>=2.11.0"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 [project.urls]
 Repository = "https://github.com/BeautyyuYanli/Prompt-Bottle"
-
-[dependency-groups]
-dev = [
-    "pytest>=8.3.3",
-    "rich>=13.9.4"
-]
 
 
 [build-system]
@@ -35,12 +27,14 @@ distribution = true
 dev = [
     "rich>=13.9.4",
     "ruff>=0.8.1",
+    "pytest>=8.3.3",
+    "rich>=13.9.4"
 ]
 [tool.pyright]
 venvPath = ".venv"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 exclude = [".venv"]
 [tool.ruff.lint]
 select = ["E", "F", "G", "B", "I", "SIM", "TID", "PL", "RUF"]
@@ -64,3 +58,4 @@ known-first-party = ["prompt_bottle"]
 [tool.pdm.scripts]
 fix = { shell = "ruff check --fix && ruff format" }
 check = { shell = 'ruff check && ruff format --check' }
+test = { shell = 'pytest' }

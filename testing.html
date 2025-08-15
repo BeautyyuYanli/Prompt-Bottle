@@ -1,0 +1,26 @@
+{{ system_prompt }}
+{% for h in history %}
+<div role="user">
+    askjdhakjsd
+
+</div>
+<div role="assistant">
+    asjkdadlk
+        <a>bar</a>
+    {{ h.assistant }}
+    kldfjslkdjf
+      ident=2
+</div>
+{% endfor %}
+<div role="tool">
+    {
+        "name": "foo",
+        "required": ["bar"],
+        "properties": {
+            "bar": {
+                "type": "string",
+                "description": "The bar property"
+            }
+        }
+    }
+</div>
