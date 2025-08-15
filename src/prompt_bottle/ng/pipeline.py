@@ -1,9 +1,24 @@
-from minijinja import render_str
-from qwq_tag import QwqTag
-from typing import Iterable, Literal, Union, Annotated, Self
 from enum import StrEnum
+from typing import Iterable
+
+from minijinja import render_str
+from pydantic import BaseModel
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelRequestPart,
+    ModelResponse,
+    ModelResponsePart,
+    SystemPromptPart,
+    TextPart,
+    ThinkingPart,
+    ToolCallPart,
+    ToolReturnPart,
+    UserPromptPart,
+)
+from qwq_tag import QwqTag
 from rich import print
-from pydantic import BaseModel, AfterValidator, model_validator
+
 
 class RolesType(StrEnum):
     USER = "user"
@@ -11,13 +26,25 @@ class RolesType(StrEnum):
     SYSTEM = "system"
     TOOL = "tool"
 
-class ControlAttr(BaseModel):
-    role: RolesType
+
+class ResponseType(StrEnum):
+    TEXT = "text"
+    TOOL_CALL = "tool_call"
+    THINK = "think"
+
+
+class ToolBaseAttr(BaseModel):
+    tool_name: str
+    tool_call_id: str
+
 
 def stage_jinja_render(text: str, **kwargs) -> str:
     return render_str(text, **kwargs)
 
-def stage_split_history(text: str) -> Iterable[tuple[RolesType, list[str | QwqTag]]]:
+
+def stage_split_history(
+    text: str,
+) -> Iterable[tuple[RolesType, dict[str, str], list[str | QwqTag]]]:
     res = QwqTag.from_str(text)
     for tag in res:
         if (
@@ -27,45 +54,127 @@ def stage_split_history(text: str) -> Iterable[tuple[RolesType, list[str | QwqTa
             and role in RolesType
         ):
             yield (
-                # ControlAttr.model_validate(tag.attr),
                 RolesType(role),
+                tag.attr,
                 tag.content,
             )
         else:
             yield (
-                # ControlAttr.model_validate(getattr(tag, "attr", {"role": RolesType.SYSTEM})),
                 RolesType.SYSTEM,
+                {"role": RolesType.SYSTEM.value},
                 [tag],
             )
-        
-def stage_process(messages: Iterable[tuple[RolesType, list[str | QwqTag]]]) -> Iterable:
+
+
+def _render_assstant(content: list[str | QwqTag]) -> list[ModelResponsePart]:
+    parts: list[ModelResponsePart] = []
+    for item in content:
+        if isinstance(item, QwqTag) and item.name in ResponseType:
+            if item.name == ResponseType.TOOL_CALL:
+                attr = ToolBaseAttr.model_validate(item.attr)
+                parts.append(
+                    ToolCallPart(
+                        tool_name=attr.tool_name,
+                        tool_call_id=attr.tool_call_id,
+                        args=item.content_text,
+                    )
+                )
+            elif item.name == ResponseType.THINK:
+                parts.append(ThinkingPart(content=item.content_text))
+            elif item.name == ResponseType.TEXT:
+                if parts and parts[-1].part_kind == "text":
+                    parts[-1].content += item.content_text
+                else:
+                    parts.append(TextPart(content=item.content_text))
+            else:
+                raise NotImplementedError()
+        else:  # noqa: PLR5501
+            if parts and parts[-1].part_kind == "text":
+                parts[-1].content += str(item)
+            else:
+                parts.append(TextPart(content=str(item)))
+    return parts
+
+
+def _render_user(content: list[str | QwqTag]) -> list[ModelRequestPart]:
+    # TODO: multimodal supporting
+    return [UserPromptPart(content=_render_request_plain(content))]
+
+
+def _render_request_plain(content: list[str | QwqTag]) -> str:
+    return "".join(str(item) for item in content)
+
+
+def stage_process(
+    messages: Iterable[tuple[RolesType, dict[str, str], list[str | QwqTag]]],
+) -> Iterable[ModelResponsePart | ModelRequestPart]:
     for msg in messages:
-        content = msg[1]
-        for idx, item in enumerate(content):
-            if isinstance(item, QwqTag):
-                pass
-            else: #noqa: PLR5501
-                pass
-                # if msg[0].nospace:
-                #     content[idx] = re.sub(r'\s+', '', item)
-        yield msg[0], content
-# def stage_prompt_bottle(world: str) -> str:
-#     return PromptBottle(world)
+        content = msg[2]
+        if msg[0] == RolesType.ASSISTANT:
+            yield from _render_assstant(content)
+        elif msg[0] == RolesType.TOOL:
+            tool_attr = ToolBaseAttr.model_validate(msg[1])
+            yield ToolReturnPart(
+                tool_name=tool_attr.tool_name,
+                tool_call_id=tool_attr.tool_call_id,
+                content=_render_request_plain(content),
+            )
+        elif msg[0] == RolesType.SYSTEM:
+            yield SystemPromptPart(content=_render_request_plain(content))
+        elif msg[0] == RolesType.USER:
+            yield from _render_user(content)
+        else:
+            raise NotImplementedError()
 
 
-# def stage_openai(world: str) -> str:
-#     return OpenAI(world)
+def stage_collect(
+    messages: Iterable[ModelResponsePart | ModelRequestPart],
+) -> Iterable[ModelMessage]:
+    resp: list[ModelResponsePart] = []
+    req: list[ModelRequestPart] = []
+    for msg in messages:
+        if isinstance(msg, TextPart | ToolCallPart | ThinkingPart):
+            if not resp:
+                yield ModelRequest(parts=req)
+                req = []
+            resp.append(msg)
+        elif isinstance(msg, SystemPromptPart | UserPromptPart | ToolReturnPart):
+            if not req:
+                yield ModelResponse(parts=resp)
+                resp = []
+            req.append(msg)
 
-with open("testing.html", "r") as f:
-    content = f.read()
 
-res = stage_jinja_render(
-    content,
-    system_prompt="Hello",
-    history=[
-        {"user": "Hello", "assistant": "World"},
-    ],
-)
-res2 = stage_split_history(res)
-res3 = stage_process(res2)
-print(list(res3))
+def render(text: str, **kwargs) -> list[ModelMessage]:
+    res = stage_jinja_render(text, **kwargs)
+    res2 = stage_split_history(res)
+    res3 = stage_process(res2)
+    res4 = list(stage_collect(res3))
+    return res4
+
+
+async def to_openai_chat(source: list[ModelMessage]):
+    from pydantic_ai.models.openai import OpenAIModel
+
+    return await OpenAIModel("gpt-4o")._map_messages(source)
+
+
+async def main():
+    with open("testing.html", "r") as f:
+        content = f.read()
+
+    res = render(
+        content,
+        system_prompt="Hello",
+        history=[
+            {"user": "Hello", "assistant": "World"},
+        ],
+    )
+    res = await to_openai_chat(render(content))
+    return res
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    print(asyncio.run(main()))

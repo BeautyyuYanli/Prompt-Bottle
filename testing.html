@@ -1,18 +1,20 @@
 {{ system_prompt }}
 {% for h in history %}
 <div role="user">
-    askjdhakjsd
-
+askjdhakjsd
 </div>
 <div role="assistant">
-    asjkdadlk
-        <a>bar</a>
-    {{ h.assistant }}
-    kldfjslkdjf
-      ident=2
+  asjkdadlk
+  <a>
+      bar
+      booo
+  </a>
+  {{ h.assistant }}
+  kldfjslkdjf
+    ident=2
 </div>
 {% endfor %}
-<div role="tool">
+<div role="tool" tool_name="foo" tool_call_id="none">
     {
         "name": "foo",
         "required": ["bar"],

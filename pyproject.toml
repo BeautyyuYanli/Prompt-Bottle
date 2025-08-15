@@ -1,13 +1,14 @@
 [project]
 name = "prompt_bottle"
-version = "0.1.5"
-description = "LLM-targeted template engine, built upon Jinja"
+version = "0.2.0"
+description = "Prompt template engine, built upon Jinja"
 authors = [
     {name = "Yanli",email = "mail@yanli.one"},
 ]
 dependencies = [
-    "qwq-tag>=0.1.1",
-    "minijinja>=2.11.0"
+    "qwq-tag>=0.1.2",
+    "minijinja>=2.11.0",
+    "pydantic-ai-slim>=0.7.2"
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -23,13 +24,6 @@ build-backend = "pdm.backend"
 [tool.pdm]
 distribution = true
 
-[tool.pdm.dev-dependencies]
-dev = [
-    "rich>=13.9.4",
-    "ruff>=0.8.1",
-    "pytest>=8.3.3",
-    "rich>=13.9.4"
-]
 [tool.pyright]
 venvPath = ".venv"
 
@@ -59,3 +53,11 @@ known-first-party = ["prompt_bottle"]
 fix = { shell = "ruff check --fix && ruff format" }
 check = { shell = 'ruff check && ruff format --check' }
 test = { shell = 'pytest' }
+[dependency-groups]
+dev = [
+    "rich>=13.9.4",
+    "ruff>=0.8.1",
+    "pytest>=8.3.3",
+    "rich>=13.9.4",
+    "pydantic-ai-slim[openai]>=0.7.2",
+]

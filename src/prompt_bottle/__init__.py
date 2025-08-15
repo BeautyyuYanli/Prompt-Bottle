@@ -1,4 +1,5 @@
 from prompt_bottle.bottle import PromptBottle
+from prompt_bottle.ng.pipeline import render, to_openai_chat
 from prompt_bottle.presets.simple import simple_bottle
 from prompt_bottle.tags.tags import (
     PBTag,
@@ -17,5 +18,7 @@ __all__ = [
     "pb_mp3_audio",
     "pb_tag",
     "pb_wav_audio",
+    "render",
     "simple_bottle",
+    "to_openai_chat",
 ]
