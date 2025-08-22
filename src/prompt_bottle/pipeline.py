@@ -17,7 +17,6 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 from qwq_tag import QwqTag
-from rich import print
 
 
 class RolesType(StrEnum):
@@ -153,28 +152,3 @@ def render(text: str, **kwargs) -> list[ModelMessage]:
     return res4
 
 
-async def to_openai_chat(source: list[ModelMessage]):
-    from pydantic_ai.models.openai import OpenAIModel
-
-    return await OpenAIModel("gpt-4o")._map_messages(source)
-
-
-async def main():
-    with open("testing.html", "r") as f:
-        content = f.read()
-
-    res = render(
-        content,
-        system_prompt="Hello",
-        history=[
-            {"user": "Hello", "assistant": "World"},
-        ],
-    )
-    res = await to_openai_chat(render(content))
-    return res
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    print(asyncio.run(main()))
