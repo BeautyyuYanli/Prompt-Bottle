@@ -1,6 +1,6 @@
-# Prompt Bottle 🍼
-
 <div align="center">
+
+# Prompt Bottle
 
 <img src="https://github.com/user-attachments/assets/a3145acc-ae14-4b5a-b6e5-0e11ef488450" width=200>
 
