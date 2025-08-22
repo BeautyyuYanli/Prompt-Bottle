@@ -131,17 +131,43 @@ def stage_collect(
 ) -> Iterable[ModelMessage]:
     resp: list[ModelResponsePart] = []
     req: list[ModelRequestPart] = []
+    
+    def merge_continuous_parts(parts_list: list) -> list:
+        """Merge continuous parts with the same type."""
+        if not parts_list:
+            return parts_list
+        
+        merged = []
+        for part in parts_list:
+            if (merged and 
+                type(merged[-1]) is type(part) and
+                hasattr(merged[-1], 'content') and 
+                hasattr(part, 'content')):
+                # Merge text content for parts of the same type
+                merged[-1].content += "\n" + part.content
+            else:
+                merged.append(part)
+        return merged
+    
     for msg in messages:
         if isinstance(msg, TextPart | ToolCallPart | ThinkingPart):
             if not resp:
-                yield ModelRequest(parts=req)
+                if req:
+                    yield ModelRequest(parts=merge_continuous_parts(req))
                 req = []
             resp.append(msg)
         elif isinstance(msg, SystemPromptPart | UserPromptPart | ToolReturnPart):
             if not req:
-                yield ModelResponse(parts=resp)
+                if resp:
+                    yield ModelResponse(parts=merge_continuous_parts(resp))
                 resp = []
             req.append(msg)
+    
+    # Yield any remaining parts
+    if resp:
+        yield ModelResponse(parts=merge_continuous_parts(resp))
+    if req:
+        yield ModelRequest(parts=merge_continuous_parts(req))
 
 
 def render(text: str, **kwargs) -> list[ModelMessage]:

@@ -12,11 +12,13 @@ async def main():
             {"user": "Hello", "assistant": "World"},
         ],
     )
+
+    print(res)
     res = await to_openai_chat(res)
     return res
 
 
 if __name__ == "__main__":
     import asyncio
-
+    from rich import print
     print(asyncio.run(main()))
