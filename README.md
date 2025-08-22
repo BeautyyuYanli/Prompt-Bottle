@@ -1,150 +1,127 @@
+# Prompt Bottle 🍼
+
 <div align="center">
 
 <img src="https://github.com/user-attachments/assets/a3145acc-ae14-4b5a-b6e5-0e11ef488450" width=200>
 
-# Prompt Bottle
+**A powerful prompt template engine built upon Jinja**
 
-An LLM-targeted template engine, built upon Jinja.
+[![PyPI version](https://badge.fury.io/py/prompt-bottle.svg)](https://badge.fury.io/py/prompt-bottle)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
-## Features
+## Features ✨
 
-- Use Jinja syntax to build template for LLM inputs list
-- Painless multimodal support for LLM inputs
-- Use OpenAI chat completion API
+- **🎯 Jinja-Powered Templates**: Leverage the full power of Jinja2 templating for dynamic prompt generation
+- **🎭 Role-Based Messaging**: Structure conversations with system, user, assistant, and tool roles
+- **🤖 Pydantic-AI Compatible**: Returns structured pydantic-ai ModelMessage objects for seamless integration
+- **🔄 Format Conversion**: Convert to OpenAI chat API (or other APIs) through pydantic-ai's message mapping
 
-## Quick Start
-
-Install the package via pip:
+## Installation 📦
 
 ```bash
-pip install prompt_bottle
+pip install prompt-bottle
 ```
 
-Then, we can create a "Prompt Bottle" using Jinja syntax:
+## Quick Start 🚀
+
+### Basic Usage
 
 ```python
-from prompt_bottle import PromptBottle
+from prompt_bottle import render
 
-bottle = PromptBottle(
-    [
-        {
-            "role": "system",
-            "content": "You are a helpful assistant in the domain of {{ domain }}",
-        },
-        "{% for round in rounds %}",
-        {
-            "role": "user",
-            "content": "Question: {{ round[0] }}",
-        },
-        {
-            "role": "assistant",
-            "content": "Answer: {{ round[1] }}",
-        },
-        "{% endfor %}",
-        {"role": "user", "content": "Question: {{ final_question }}"},
-    ]
-)
+# Simple template
+template = """
+You are a helpful assistant.
+<div role="user">{{ user_message }}</div>
+"""
+
+messages = render(template, user_message="Hello, world!")
+print(messages)
 ```
 
-Then we can render it as we do with Jinja.
+## Core Concepts 📚
 
-<details>
-<summary>Render the bottle and send to OpenAI:</summary>
+### Template Example
+```jinja
+You are a helpful assistant.
+{{ system_instructions }}
 
-```python
-from prompt_bottle import pb_img_url
+{% for item in conversation %}
+<div role="user">{{ item.message }}</div>
+<div role="assistant">
+  <think>{{ item.reasoning }}</think>
+  {{ item.response }}
+</div>
+{% endfor %}
 
-prompt = bottle.render(
-    domain="math",
-    rounds=[
-        ("1+1", "2"),
-        (
-            f"What is this picture? {pb_img_url('https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg')}",
-            "This is an example image by Wikipedia",
-        ),
-    ],
-    final_question="8*8",
-)
-
-from rich import print  # pip install rich
-
-print(prompt)
+<div role="user">
+  <Instruction>
+  Now you are required to answer the query based on the context.
+  Your output must be quoted in <Answer></Answer> tags.
+  </Instruction>
+  <Context>
+  {{ context }}
+  </Context>
+  <Query>
+  {{ query }}
+  </Query>
+</div>
 ```
+💡 **Check out [`example.py`](example.py) and [`example.jinja`](example.jinja) for a comprehensive example with all features!**
 
-<details>
-<summary>It prints the rendered prompt:</summary>
+> [!WARNING]
+> You can use any HTML-like tags in your prompt, other than the reserved tags. However, all tags **must be properly closed** (e.g., `<instruct> content </instruct>` not `<instruct> content`) to avoid parsing errors.
 
-```python
-[
-    {
-        'content': [{'text': 'You are a helpful assistant in the domain of math', 'type': 'text'}],
-        'role': 'system'
-    },
-    {'content': [{'text': 'Question: 1+1', 'type': 'text'}], 'role': 'user'},
-    {'role': 'assistant', 'content': [{'text': 'Answer: 2', 'type': 'text'}]},
-    {
-        'content': [
-            {'text': 'Question: What is this picture? ', 'type': 'text'},
-            {
-                'image_url': {'url': 'https://upload.wikimedia.org/wikipedia/en/a/a9/Example.jpg'},
-                'type': 'image_url'
-            }
-        ],
-        'role': 'user'
-    },
-    {
-        'role': 'assistant',
-        'content': [{'text': 'Answer: This is an example image by Wikipedia', 'type': 'text'}]
-    },
-    {'content': [{'text': 'Question: 8*8', 'type': 'text'}], 'role': 'user'}
-]
-```
-</details>
+### Roles
+Prompt Bottle supports four main roles:
 
-Finally, we can send the prompt to OpenAI:
+- **`system`**: System instructions and configuration. Default of raw text.
+- **`user`**: User messages and queries  
+- **`assistant`**: AI assistant responses
+- **`tool`**: Tool execution results
 
-```python
-from openai import OpenAI
+### Response Types
+Assistant responses can include multiple content tags:
 
-client = OpenAI()
+- **`<text>`**: Regular text content. Default of raw text.
+- **`<tool_call>`**: Function/tool invocations
+- **`<think>`**: Reasoning and thought processes
 
-response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=prompt,
-)
-
-print(response.choices[0].message.content)
-```
-
-The response is:
-
-```
-Answer: 64
-```
-
-</details>
+### Request Types
+TODO: Will support multimodal input in the future.
 
 
-## Concepts
+## API Reference 📖
 
-**Prompt Bottle**
+### `render(template: str, **kwargs) -> list[ModelMessage]`
+Renders a Jinja template with the provided variables and returns structured messages.
 
-The template of the prompt. It is a list of **Template Messages**. It can be rendered as python dict or JSON string.
+**Parameters:**
+- `template`: Jinja template string
+- `**kwargs`: Template variables
 
-**Template Message**
+**Returns:** List of pydantic-ai ModelMessage objects (ModelRequest/ModelResponse)
 
-A message is either an OpenAI message dict, or a Jinja control block like `{% for ... %}` or `{% if ... %}`. 
+### `to_openai_chat(messages: list[ModelMessage], **model_kwargs) -> list[dict]`
+Converts structured messages to OpenAI chat completion format.
 
-If it is a text message, it will be rendered by Jinja firstly, like `{{ variable }}`. And then it will be rendered by `Multimodal Tag`.
+**Parameters:**
+- `messages`: List of ModelMessage objects from render()
+- `**model_kwargs`: OpenAI model configuration (default model: gpt-4o)
 
-**Multimodal Tag**
+**Returns:** List of OpenAI-formatted message dictionaries
 
-The tag inside a text can render the text message as multimodal parts. The tag looks like `<PROMPT_BOTTLE_IMG_URL>https://your.image.url</PROMPT_BOTTLE_IMG_URL>`, or using `pb_img_url("https://your.image.url")` function to get it.
+## Contributing 🤝
 
-All the **Multimodal Tags** can be found in [prompt_bottle.tags.tags](./src/prompt_bottle/tags/tags.py).
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-**Presets**
+## License 📄
 
-Some common prompt templates are provided in [prompt_bottle.presets](./src/prompt_bottle/presets).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Links 🔗
+
+[velin](https://github.com/moeru-ai/velin): Vue.js based prompt template engine

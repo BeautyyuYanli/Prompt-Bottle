@@ -1,31 +1,30 @@
-<Instruction>
-    test
-</Instruction>
-{{ system_prompt }}
-{% for h in history %}
-<div role="user">
-askjdhakjsd
-</div>
+{# System prompt with dynamic content #}
+You are {{ assistant_name | default("Assistant") }}, a {{ assistant_type | default("helpful") }} assistant.
+{% if current_date %}Current date: {{ current_date }}{% endif %}
+{% if tools %}Available tools: {{ tools | join(", ") }}{% endif %}
+
+{# Chat history loop #}
+{% for item in conversation_history %}
+<div role="user">{{ item.user }}</div>
 <div role="assistant">
-  asjkdadlk
-  <a>
-      bar
-      booo
-  </a>
-  {{ h.assistant }}
-  kldfjslkdjf
-    ident=2
+  {% if item.reasoning %}
+  <think>{{ item.reasoning }}</think>
+  {% endif %}
+  {{ item.assistant }}
+  {% if item.tool_needed %}
+  <tool_call tool_name="{{ item.tool_name }}" tool_call_id="call_{{ loop.index }}">
+  {{ item.tool_args | tojson }}
+  </tool_call>
+  {% endif %}
 </div>
+
+{# Tool response if there was a tool call #}
+{% if item.tool_needed and item.tool_response %}
+<div role="tool" tool_name="{{ item.tool_name }}" tool_call_id="call_{{ loop.index }}">
+{{ item.tool_response }}
+</div>
+{% endif %}
 {% endfor %}
-<div role="tool" tool_name="foo" tool_call_id="none">
-    {
-        "name": "foo",
-        "required": ["bar"],
-        "properties": {
-            "bar": {
-                "type": "string",
-                "description": "The bar property"
-            }
-        }
-    }
-</div>
+
+{# Current user message #}
+<div role="user">{{ current_question }}</div>
