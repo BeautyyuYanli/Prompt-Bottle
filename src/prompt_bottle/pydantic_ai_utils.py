@@ -1,12 +1,19 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic_ai.messages import ModelMessage
 
+if TYPE_CHECKING:
+    from openai.types.chat.chat_completion_message_param import (
+        ChatCompletionMessageParam,
+    )
 
-async def to_openai_chat(source: list[ModelMessage], **model_kwargs: Any):
-    from pydantic_ai.models.openai import OpenAIModel
+
+async def to_openai_chat(
+    source: list[ModelMessage], **model_kwargs: Any
+) -> "list[ChatCompletionMessageParam]":
+    from pydantic_ai.models.openai import OpenAIChatModel
 
     if "model_name" not in model_kwargs:
         model_kwargs["model_name"] = "gpt-4o"
 
-    return await OpenAIModel(**model_kwargs)._map_messages(source) # type: ignore
+    return await OpenAIChatModel(**model_kwargs)._map_messages(source)

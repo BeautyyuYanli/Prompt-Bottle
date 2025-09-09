@@ -50,7 +50,7 @@ def stage_split_history(
             isinstance(tag, QwqTag)
             and tag.name == "div"
             and (role := tag.attr.get("role", None))
-            and role in RolesType
+            and any(x.value == role for x in RolesType)
         ):
             yield (
                 RolesType(role),
