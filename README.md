@@ -1,8 +1,8 @@
 <div align="center">
 
-# Prompt Bottle
+<img src="https://github.com/user-attachments/assets/d7ab6301-e0b2-4573-b232-0bc7d498e95a" width=200>
 
-<img src="https://github.com/user-attachments/assets/a3145acc-ae14-4b5a-b6e5-0e11ef488450" width=200>
+# Prompt Bottle
 
 **A powerful prompt template engine built upon Jinja**
 
