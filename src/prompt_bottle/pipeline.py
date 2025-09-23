@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import Iterable
 
 from minijinja import render_str
@@ -17,6 +16,11 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 from qwq_tag import QwqTag
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from strenum import StrEnum
 
 
 class RolesType(StrEnum):
