@@ -15,12 +15,13 @@ from pydantic_ai.messages import (
     ToolReturnPart,
     UserPromptPart,
 )
-from qwq_tag import QwqTag
+
+from prompt_bottle.parse import Tag
 
 try:
-    from enum import StrEnum
+    from enum import StrEnum  # type: ignore
 except ImportError:
-    from strenum import StrEnum
+    from strenum import StrEnum  # type: ignore
 
 
 class RolesType(StrEnum):
@@ -47,14 +48,14 @@ def stage_jinja_render(text: str, **kwargs) -> str:
 
 def stage_split_history(
     text: str,
-) -> Iterable[tuple[RolesType, dict[str, str], list[str | QwqTag]]]:
-    res = QwqTag.from_str(text)
+) -> Iterable[tuple[RolesType, dict[str, str], str]]:
+    res = Tag.from_str(text)
     for tag in res:
         if (
-            isinstance(tag, QwqTag)
+            isinstance(tag, Tag)
             and tag.name == "div"
             and (role := tag.attr.get("role", None))
-            and any(x.value == role for x in RolesType)
+            and role in {x.value for x in RolesType}
         ):
             yield (
                 RolesType(role),
@@ -65,15 +66,15 @@ def stage_split_history(
             yield (
                 RolesType.SYSTEM,
                 {"role": RolesType.SYSTEM.value},
-                [tag],
+                str(tag),
             )
 
 
-def _render_assstant(content: list[str | QwqTag]) -> list[ModelResponsePart]:
+def _render_assstant(content: list[str | Tag]) -> list[ModelResponsePart]:
     parts: list[ModelResponsePart] = []
     for item in content:
-        if isinstance(item, QwqTag) and item.name in ResponseType:
-            if item.name == ResponseType.TOOL_CALL:
+        if isinstance(item, Tag) and item.name in {x.value for x in ResponseType}:
+            if item.name == ResponseType.TOOL_CALL.value:
                 attr = ToolBaseAttr.model_validate(item.attr)
                 parts.append(
                     ToolCallPart(
@@ -82,9 +83,9 @@ def _render_assstant(content: list[str | QwqTag]) -> list[ModelResponsePart]:
                         args=item.content_text,
                     )
                 )
-            elif item.name == ResponseType.THINK:
+            elif item.name == ResponseType.THINK.value:
                 parts.append(ThinkingPart(content=item.content_text))
-            elif item.name == ResponseType.TEXT:
+            elif item.name == ResponseType.TEXT.value:
                 if parts and parts[-1].part_kind == "text":
                     parts[-1].content += item.content_text
                 else:
@@ -99,20 +100,20 @@ def _render_assstant(content: list[str | QwqTag]) -> list[ModelResponsePart]:
     return parts
 
 
-def _render_user(content: list[str | QwqTag]) -> list[ModelRequestPart]:
+def _render_user(content: list[str | Tag]) -> list[ModelRequestPart]:
     # TODO: multimodal supporting
     return [UserPromptPart(content=_render_request_plain(content))]
 
 
-def _render_request_plain(content: list[str | QwqTag]) -> str:
+def _render_request_plain(content: list[str | Tag]) -> str:
     return "".join(str(item) for item in content)
 
 
 def stage_process(
-    messages: Iterable[tuple[RolesType, dict[str, str], list[str | QwqTag]]],
+    messages: Iterable[tuple[RolesType, dict[str, str], str]],
 ) -> Iterable[ModelResponsePart | ModelRequestPart]:
     for msg in messages:
-        content = msg[2]
+        content = Tag.from_str(msg[2])
         if msg[0] == RolesType.ASSISTANT:
             yield from _render_assstant(content)
         elif msg[0] == RolesType.TOOL:
@@ -135,24 +136,26 @@ def stage_collect(
 ) -> Iterable[ModelMessage]:
     resp: list[ModelResponsePart] = []
     req: list[ModelRequestPart] = []
-    
+
     def merge_continuous_parts(parts_list: list) -> list:
         """Merge continuous parts with the same type."""
         if not parts_list:
             return parts_list
-        
+
         merged = []
         for part in parts_list:
-            if (merged and 
-                type(merged[-1]) is type(part) and
-                hasattr(merged[-1], 'content') and 
-                hasattr(part, 'content')):
+            if (
+                merged
+                and type(merged[-1]) is type(part)
+                and hasattr(merged[-1], "content")
+                and hasattr(part, "content")
+            ):
                 # Merge text content for parts of the same type
                 merged[-1].content += "\n" + part.content
             else:
                 merged.append(part)
         return merged
-    
+
     for msg in messages:
         if isinstance(msg, TextPart | ToolCallPart | ThinkingPart):
             if not resp:
@@ -166,7 +169,7 @@ def stage_collect(
                     yield ModelResponse(parts=merge_continuous_parts(resp))
                 resp = []
             req.append(msg)
-    
+
     # Yield any remaining parts
     if resp:
         yield ModelResponse(parts=merge_continuous_parts(resp))
@@ -180,5 +183,3 @@ def render(text: str, **kwargs) -> list[ModelMessage]:
     res3 = stage_process(res2)
     res4 = list(stage_collect(res3))
     return res4
-
-

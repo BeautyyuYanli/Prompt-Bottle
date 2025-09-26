@@ -1,10 +1,9 @@
 [project]
 name = "prompt_bottle"
-version = "0.3.3"
+version = "0.4.0"
 description = "Prompt template engine, built upon Jinja"
 authors = [{ name = "Yanli", email = "mail@yanli.one" }]
 dependencies = [
-    "qwq-tag>=0.1.2",
     "minijinja>=2.11.0",
     "pydantic-ai-slim>=1.0.2",
     "StrEnum>=0.4.15; python_version < \"3.11\"",

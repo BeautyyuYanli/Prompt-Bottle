@@ -8,7 +8,7 @@ async def main():
     # Load template
     with open("example.jinja", "r") as f:
         template = f.read()
-    
+
     # Template variables
     template_vars = {
         "assistant_name": "DataBot",
@@ -23,7 +23,7 @@ async def main():
                 "tool_needed": True,
                 "tool_name": "get_weather",
                 "tool_args": {"location": "current"},
-                "tool_response": '{"temperature": "22°C", "condition": "sunny", "humidity": "65%"}'
+                "tool_response": '{"temperature": "22°C", "condition": "sunny", "humidity": "65%"}',
             },
             {
                 "user": "Can you calculate 15 * 23?",
@@ -32,18 +32,18 @@ async def main():
                 "tool_needed": True,
                 "tool_name": "calculate",
                 "tool_args": {"expression": "15 * 23"},
-                "tool_response": "345"
+                "tool_response": "345",
             },
             {
                 "user": "Thank you!",
                 "assistant": "You're welcome! Is there anything else I can help you with?",
                 "reasoning": "User is expressing gratitude. A simple acknowledgment and offer for further assistance is appropriate.",
-                "tool_needed": False
-            }
+                "tool_needed": False,
+            },
         ],
-        "current_question": "Can you analyze the sales data and create a summary?"
+        "current_question": "Can you analyze the sales data and create a summary?",
     }
-    
+
     # Render the template
     # from rich import print
     messages = render(template, **template_vars)
@@ -51,7 +51,6 @@ async def main():
 
     messages = await to_openai_chat(messages)
     print(messages)
-    
 
 
 if __name__ == "__main__":
