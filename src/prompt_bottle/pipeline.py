@@ -80,23 +80,23 @@ def _render_assstant(content: list[str | Tag]) -> list[ModelResponsePart]:
                     ToolCallPart(
                         tool_name=attr.tool_name,
                         tool_call_id=attr.tool_call_id,
-                        args=item.content_text,
+                        args=item.content_text.strip(),
                     )
                 )
             elif item.name == ResponseType.THINK.value:
-                parts.append(ThinkingPart(content=item.content_text))
+                parts.append(ThinkingPart(content=item.content_text.strip()))
             elif item.name == ResponseType.TEXT.value:
                 if parts and parts[-1].part_kind == "text":
-                    parts[-1].content += item.content_text
-                else:
-                    parts.append(TextPart(content=item.content_text))
+                    parts[-1].content += item.content_text.strip()
+                elif text := item.content_text.strip():
+                    parts.append(TextPart(content=text))
             else:
                 raise NotImplementedError()
         else:  # noqa: PLR5501
             if parts and parts[-1].part_kind == "text":
                 parts[-1].content += str(item)
-            else:
-                parts.append(TextPart(content=str(item)))
+            elif text := str(item).strip():
+                parts.append(TextPart(content=text))
     return parts
 
 
@@ -106,7 +106,7 @@ def _render_user(content: list[str | Tag]) -> list[ModelRequestPart]:
 
 
 def _render_request_plain(content: list[str | Tag]) -> str:
-    return "".join(str(item) for item in content)
+    return "".join(str(item) for item in content).strip()
 
 
 def stage_process(
@@ -124,7 +124,11 @@ def stage_process(
                 content=_render_request_plain(content),
             )
         elif msg[0] == RolesType.SYSTEM:
-            yield SystemPromptPart(content=_render_request_plain(content))
+            content = _render_request_plain(content)
+            if content:
+                yield SystemPromptPart(content=content)
+            else:
+                continue
         elif msg[0] == RolesType.USER:
             yield from _render_user(content)
         else:
@@ -137,21 +141,23 @@ def stage_collect(
     resp: list[ModelResponsePart] = []
     req: list[ModelRequestPart] = []
 
-    def merge_continuous_parts(parts_list: list) -> list:
+    def merge_continuous_parts(
+        parts_list: list[ModelRequestPart] | list[ModelResponsePart],
+    ) -> list:
         """Merge continuous parts with the same type."""
         if not parts_list:
             return parts_list
 
-        merged = []
+        merged: list[ModelResponsePart | ModelRequestPart] = []
         for part in parts_list:
             if (
                 merged
-                and type(merged[-1]) is type(part)
-                and hasattr(merged[-1], "content")
-                and hasattr(part, "content")
+                and type((last := merged[-1])) is type(part)
+                and isinstance(getattr(last, "content", None), str)
+                and isinstance(getattr(part, "content", None), str)
             ):
                 # Merge text content for parts of the same type
-                merged[-1].content += "\n" + part.content
+                last.content += "\n" + part.content  # type: ignore
             else:
                 merged.append(part)
         return merged
