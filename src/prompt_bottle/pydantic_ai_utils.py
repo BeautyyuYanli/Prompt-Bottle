@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any
 
+from openai.types.chat import ChatCompletionMessageParam
 from pydantic_ai.messages import ModelMessage
 
 if TYPE_CHECKING:

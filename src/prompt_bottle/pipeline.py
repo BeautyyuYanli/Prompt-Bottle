@@ -1,4 +1,6 @@
-from typing import Iterable
+from collections.abc import Iterable
+from enum import StrEnum
+from typing import TypeVar
 
 from minijinja import render_str
 from pydantic import BaseModel
@@ -22,6 +24,8 @@ try:
     from enum import StrEnum  # type: ignore
 except ImportError:
     from strenum import StrEnum  # type: ignore
+
+TPart = TypeVar("TPart", ModelResponsePart, ModelRequestPart)
 
 
 class RolesType(StrEnum):
@@ -141,9 +145,7 @@ def stage_collect(
     resp: list[ModelResponsePart] = []
     req: list[ModelRequestPart] = []
 
-    def merge_continuous_parts(
-        parts_list: list[ModelRequestPart] | list[ModelResponsePart],
-    ) -> list:
+    def merge_continuous_parts(parts_list: list[TPart]) -> list[TPart]:
         """Merge continuous parts with the same type."""
         if not parts_list:
             return parts_list
@@ -163,13 +165,13 @@ def stage_collect(
         return merged
 
     for msg in messages:
-        if isinstance(msg, TextPart | ToolCallPart | ThinkingPart):
+        if isinstance(msg, (TextPart, ToolCallPart, ThinkingPart)):
             if not resp:
                 if req:
                     yield ModelRequest(parts=merge_continuous_parts(req))
                 req = []
             resp.append(msg)
-        elif isinstance(msg, SystemPromptPart | UserPromptPart | ToolReturnPart):
+        elif isinstance(msg, (SystemPromptPart, UserPromptPart, ToolReturnPart)):
             if not req:
                 if resp:
                     yield ModelResponse(parts=merge_continuous_parts(resp))
